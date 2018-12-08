@@ -1,7 +1,7 @@
 # purple-air
-A lambda to monitor a [PurpleAir](https://www.purpleair.com/) station, and notify on PM2.5 changes.
+A lambda to monitor a [PurpleAir](https://www.purpleair.com/) station, and notify on PM2.5 changes. The script monitors a single PurpleAir station, and sends a notification via SNS when the PM2.5 crosses a 'color' threshold.
 
-This is intended to be run as a lambda on AWS. The script monitors a single PurpleAir station, and sends a notification via SNS.
+For myself, I run it on a cron: every 30 minutes during the day.
 
 You can find PurpleAir's API documentation [here](https://docs.google.com/document/d/15ijz94dXJ-YAZLi9iZ_RaBwrZ4KtYeCy08goGBwnbCU/edit).
 
