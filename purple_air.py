@@ -101,7 +101,7 @@ def lambda_handler(event, context):
             else:
                 print("change below notification threshold")
         else:
-            print("no change in color")
+            print("no change in color (still " + new_color.name + ")")
     except:
         print('Check failed!')
         raise
