@@ -12,6 +12,7 @@ BUCKET_NAME = os.environ['bucket_name']
 FILENAME = os.environ['filename']
 TOPIC_ARN = os.environ['topic_arn']
 MIN_COLOR_NOTIF_THRESHOLD = int(os.environ['min_color_notif_threshold'])
+COUNTER_STRATEGY = os.environ['counter'] # 'a' -> Counter 0, 'b' -> Counter 1, 'both' -> average of both
 
 s3 = boto3.client('s3')
 sns = boto3.client('sns')
@@ -53,7 +54,12 @@ def pm_2_5_average(data):
     stats0 = json.loads(data["results"][0]["Stats"])
     stats1 = json.loads(data["results"][1]["Stats"])
 
-    return (stats0["v"] + stats1["v"])/2.
+    if COUNTER_STRATEGY == "a":
+        return stats0["v"]
+    elif COUNTER_STRATEGY == "b":
+        return stats1["v"]
+    else:
+        return (stats0["v"] + stats1["v"])/2.
 
 
 def get_last_color():
