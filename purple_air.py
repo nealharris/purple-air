@@ -13,6 +13,7 @@ FILENAME = os.environ['filename']
 TOPIC_ARN = os.environ['topic_arn']
 MIN_COLOR_NOTIF_THRESHOLD = int(os.environ['min_color_notif_threshold'])
 COUNTER_STRATEGY = os.environ['counter'] # 'a' -> Counter 0, 'b' -> Counter 1, 'both' -> average of both
+CONVERSION_METHOD = os.environ['conversion']
 
 s3 = boto3.client('s3')
 sns = boto3.client('sns')
@@ -55,12 +56,17 @@ def pm_2_5_average(data):
     stats1 = json.loads(data["results"][1]["Stats"])
 
     if COUNTER_STRATEGY == "a":
-        return stats0["v"]
+        reading = rstats0["v"]
     elif COUNTER_STRATEGY == "b":
-        return stats1["v"]
+        reading = stats1["v"]
     else:
-        return (stats0["v"] + stats1["v"])/2.
+        reading = (stats0["v"] + stats1["v"])/2.
 
+    # we only consider the lrapa conversion for now, though there are others.
+    if CONVERSION_METHOD = 'lrapa':
+        return reading * 0.5 - 0.66 # see https://www.lrapa.org/DocumentCenter/View/4147/PurpleAir-Correction-Summary
+    else:
+        return reading
 
 def get_last_color():
     response = s3.get_object(Bucket=BUCKET_NAME, Key=FILENAME)
