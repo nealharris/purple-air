@@ -63,7 +63,7 @@ def pm_2_5_average(data):
         reading = (stats0["v"] + stats1["v"])/2.
 
     # we only consider the lrapa conversion for now, though there are others.
-    if CONVERSION_METHOD = 'lrapa':
+    if CONVERSION_METHOD == 'lrapa':
         return reading * 0.5 - 0.66 # see https://www.lrapa.org/DocumentCenter/View/4147/PurpleAir-Correction-Summary
     else:
         return reading
