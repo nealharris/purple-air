@@ -14,6 +14,7 @@ TOPIC_ARN = os.environ['topic_arn']
 MIN_COLOR_NOTIF_THRESHOLD = int(os.environ['min_color_notif_threshold'])
 COUNTER_STRATEGY = os.environ['counter'] # 'a' -> Counter 0, 'b' -> Counter 1, 'both' -> average of both
 CONVERSION_METHOD = os.environ['conversion']
+CORRECTION_FACTOR = os.environ['correction']
 
 s3 = boto3.client('s3')
 sns = boto3.client('sns')
@@ -52,21 +53,36 @@ def get_sensor_data():
 
 
 def pm_2_5_average(data):
-    stats0 = json.loads(data["results"][0]["Stats"])
-    stats1 = json.loads(data["results"][1]["Stats"])
+    # Correction factor is discussed at https://cfpub.epa.gov/si/si_public_file_download.cfm?p_download_id=540979&Lab=CEMM
+    if CORRECTION_FACTOR == '1':
+        pm_2_5_reading_a = data["results"][0]["pm2_5_cf_1"]
+        pm_2_5_reading_b = data["results"][1]["pm2_5_cf_1"]
+    else:
+        pm_2_5_reading_a = data["results"][0]["pm2_5_atm"]
+        pm_2_5_reading_b = data["results"][1]["pm2_5_atm"]
+
+    humidity_reading_a = data["results"][0]["humidity"]
+    humidity_reading_b = data["results"][1]["humidity"]
 
     if COUNTER_STRATEGY == "a":
-        reading = rstats0["v"]
+        pm_2_5_reading = pm_2_5_reading_a
+        humidity_reading = humidity_reading_a
     elif COUNTER_STRATEGY == "b":
-        reading = stats1["v"]
+        humidity_reading_a = humidity_reading_b
+        pm_2_5_reading = pm_2_5_reading_b
     else:
-        reading = (stats0["v"] + stats1["v"])/2.
+        pm_2_5_reading = (pm_2_5_reading_a + pm_2_5_reading_b)/2.
+        humidity_reading = (humidity_reading_a + humidity_reading_b)/2.
 
     # we only consider the lrapa conversion for now, though there are others.
-    if CONVERSION_METHOD == 'lrapa':
-        return reading * 0.5 - 0.66 # see https://www.lrapa.org/DocumentCenter/View/4147/PurpleAir-Correction-Summary
+    if CONVERSION_METHOD == "lrapa":
+        # see https://www.lrapa.org/DocumentCenter/View/4147/PurpleAir-Correction-Summary
+        return pm_2_5_reading * 0.5 - 0.66
+    elif CONVERSION_METHOD == "epa":
+        # see https://cfpub.epa.gov/si/si_public_file_download.cfm?p_download_id=540979&Lab=CEMM , slide 8
+        return 0.52 * pm_2_5_reading - 0.085 * humidity_reading + 5.71
     else:
-        return reading
+        return pm_2_5_reading
 
 def get_last_color():
     response = s3.get_object(Bucket=BUCKET_NAME, Key=FILENAME)
